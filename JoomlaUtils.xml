@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="3.1" type="plugin" group="content">
+	<name>JoomlaUtils</name>
+	<creationDate>2016-12-22</creationDate>
+	<author>Thomas Weise</author>
+	<authorEmail>tweise@hfuu.edu.cn</authorEmail>
+	<authorUrl>http://www.it-weise.de</authorUrl>
+	<copyright>2016</copyright>
+	<license>GNU/GPL 3</license>
+	<version>0.8.0</version>
+	<description>Some utilities used in our IOAO website.</description>
+	<files>
+		<filename plugin="JoomlaUtils">JoomlaUtils.php</filename>
+		<folder>css</folder>
+	</files>
+	<config />
+</extension>
