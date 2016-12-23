@@ -164,13 +164,13 @@ class plgContentJoomlaUtils extends JPlugin {
         $markers = '';
         $locationIndex = 0;
         while ( ($line = self::__nextStringFromArray ( $mapLines, $index )) !== false ) {
-          $mapItem = explode ( '|', $line );
+          $i = strpos ( $line, '|' );
           $color = self::MAP_COLORS [$locationIndex];
           $id = chr ( 65 + $locationIndex );
-          $coordinate = trim ( $mapItem [0] );
+          $coordinate = trim ( substr ( $line, 0, $i ) );
           $mapRes = $mapRes . '<li class="map"><a style="color:#' . $color .
                '" href="http://maps.google.com/maps?q=' . $coordinate . '">' . $id .
-               '</a>:&nbsp;' . trim ( $mapItem [1] ) .
+               '</a>:&nbsp;' . trim ( substr ( $line, $i + 1 ) ) .
                ' (<a href="http://maps.google.com/maps?q=' . $coordinate .
                '">map</a>)</li>';
           $markers = $markers . '&amp;markers=color:0x' . $color . '%7Clabel:' . $id .
