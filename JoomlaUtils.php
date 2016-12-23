@@ -21,6 +21,18 @@ class plgContentJoomlaUtils extends JPlugin {
   const P_OPEN = [ '<p>' ];
   // constants for closing paragraph tags
   const P_CLOSE = [ '</p>' ];
+  // a prefix for wikipedia links
+  const WIKIPEDIA_PREFIX = 'wiki';
+  // the chinese locale
+  const LOCALE_CHINESE = 'zh_HANS';
+  // the default locale
+  const LOCALE_DEFAULT = 'en';
+  // the chinese locale
+  const LOCALE_FOREIGN_DEFAULT = self::LOCALE_CHINESE;
+  // the wikipedia base urls for different locales
+  const WIKIPEDIA_URLS_FOR_LOCALES = [ 'de' => 'https://de.wikipedia.org/wiki/',
+      'en' => 'https://en.wikipedia.org/wiki/','zh' => 'https://zh.wikipedia.org/wiki/' ];
+  
   // all possible leading breaks
   static $BREAKS_LEADING;
   // all possible trailing breaks
@@ -45,7 +57,7 @@ class plgContentJoomlaUtils extends JPlugin {
     return true;
   }
   
-  // rendering second language tags [[..]]
+  // rendering second language tags and wikipedia links [[..]]
   private function __renderSecondLanguage(&$text) {
     $offset = 0;
     $retval = false;
@@ -54,9 +66,39 @@ class plgContentJoomlaUtils extends JPlugin {
           $offset = $startIndex + 2;
       if ((($endIndex = strpos ( $text, ']]', $startIndex + 2 )) !== false) &&
            ($endIndex > $startIndex)) {
-        $chosen = trim ( substr ( $text, $startIndex + 2, $endIndex - $startIndex - 2 ) );
-        $chosen = '<span class="lng">[' . $chosen . ']</span>';
-        $text = substr_replace ( $text, $chosen, $startIndex, 
+        
+        $selected = explode ( '|', 
+            trim ( substr ( $text, $startIndex + 2, $endIndex - $startIndex - 2 ) ) );
+        
+        $contents = trim ( $selected [0] );
+        
+        $locale = (count ( $selected ) > 1) ? trim ( $selected [1] ) : '';
+        if (strlen ( $locale ) <= 0) {
+          $locale = self::LOCALE_FOREIGN_DEFAULT;
+        }
+        
+        $url = (count ( $selected ) > 2) ? trim ( $selected [2] ) : '';
+        if ($url === self::WIKIPEDIA_PREFIX) {
+          $url = $contents;
+        }
+        
+        if ($locale !== self::LOCALE_DEFAULT) {
+          $replacementStart = '<span class="lng" lang="' . $locale . '">[';
+          $replacementEnd = ']</span>';
+        } else {
+          $replacementStart = '';
+          $replacementEnd = '';
+        }
+        if (strlen ( $url ) > 0) {
+          if (substr ( $url, 0, 4 ) !== 'http') {
+            $url = self::__wikiLink ( $url, $locale );
+          }
+          $replacementStart = $replacementStart . '<a href="' . $url . '">';
+          $replacementEnd = '</a>' . $replacementEnd;
+        }
+        
+        $text = substr_replace ( $text, 
+            ($replacementStart . $contents . $replacementEnd), $startIndex, 
             $endIndex - $startIndex + 2 );
         $retval = true;
       } else {
@@ -66,7 +108,38 @@ class plgContentJoomlaUtils extends JPlugin {
     
     return $retval;
   }
-
+  
+  // generate a link to wikipedia
+  private function __wikiLink($text, $locale = self::LOCALE_DEFAULT) {
+    
+    // repare wikipedia url body
+    $text = trim ( $text );
+    $i = strlen ( self::WIKIPEDIA_PREFIX );
+    if (substr ( $text, 0, $i ) === self::WIKIPEDIA_PREFIX) {
+      $text = trim ( substr ( $text, $i ) );
+    }
+    if (substr ( $text, 0, 1 ) === ':') {
+      $text = trim ( substr ( $text, 1 ) );
+    }
+    $text = str_replace ( ' ', '_', $text );
+    
+    // prepare locale
+    $locale = trim ( $locale );
+    $i = strpos ( $locale, '_' );
+    if ($i !== false) {
+      $locale = trim ( substr ( $locale, 0, $i ) );
+    }
+    
+    // lookup base url
+    if (array_key_exists ( $locale, self::WIKIPEDIA_URLS_FOR_LOCALES )) {
+      $baseUrl = self::WIKIPEDIA_URLS_FOR_LOCALES [$locale];
+    } else {
+      $baseUrl = self::WIKIPEDIA_URLS_FOR_LOCALES [self::LOCALE_DEFAULT];
+    }
+    return $baseUrl . $text;
+  }
+  
+  // rendering of map shortcodes
   private function __renderMap(&$text) {
     $offset = 0;
     $retval = false;
@@ -95,8 +168,9 @@ class plgContentJoomlaUtils extends JPlugin {
           $color = self::MAP_COLORS [$locationIndex];
           $id = chr ( 65 + $locationIndex );
           $coordinate = trim ( $mapItem [0] );
-          $mapRes = $mapRes . '<li class="map"><span style="color:#' . $color . '">' . $id .
-               '</span>:&nbsp;' . trim ( $mapItem [1] ) .
+          $mapRes = $mapRes . '<li class="map"><a style="color:#' . $color .
+               '" href="http://maps.google.com/maps?q=' . $coordinate . '">' . $id .
+               '</a>:&nbsp;' . trim ( $mapItem [1] ) .
                ' (<a href="http://maps.google.com/maps?q=' . $coordinate .
                '">map</a>)</li>';
           $markers = $markers . '&amp;markers=color:0x' . $color . '%7Clabel:' . $id .
@@ -120,7 +194,8 @@ class plgContentJoomlaUtils extends JPlugin {
     
     return $retval;
   }
-
+  
+  // finding next non-empty string in a string list
   private function __nextStringFromArray($array, &$index) {
     for(; $index < count ( $array ); $index ++) {
       $text = trim ( $array [$index] );
@@ -131,30 +206,34 @@ class plgContentJoomlaUtils extends JPlugin {
     }
     return false;
   }
-
+  
+  // remove breaks directly at the end of text that may come from tinyMCE
   private function __stripTrailingBreaks($text) {
     $found = true;
     while ( $found ) {
       $found = false;
       $text = rtrim ( $text );
       foreach ( self::$BREAKS_TRAILING as $str ) {
-        if (substr ( $text, strlen ( $text ) - strlen ( $str ) ) === $str) {
-          $text = substr ( $text, 0, strlen ( $text ) - strlen ( $str ) );
+        $i = strlen ( $text ) - strlen ( $str );
+        if (substr ( $text, $i ) === $str) {
+          $text = substr ( $text, 0, $i );
           $found = true;
         }
       }
     }
     return $text;
   }
-
+  
+  // remove breaks directly at the start of text that may come from tinyMCE
   private function __stripLeadingBreaks($text) {
     $found = true;
     while ( $found ) {
       $found = false;
       $text = ltrim ( $text );
       foreach ( self::$BREAKS_LEADING as $str ) {
-        if (substr ( $text, 0, strlen ( $str ) ) === $str) {
-          $text = substr ( $text, strlen ( $str ) );
+        $i = strlen ( $str );
+        if (substr ( $text, 0, $i ) === $str) {
+          $text = substr ( $text, $i );
           $found = true;
         }
       }
@@ -162,7 +241,8 @@ class plgContentJoomlaUtils extends JPlugin {
     
     return $text;
   }
-
+  
+  // convert breaks to newlines in order to deal with stuff tinyMCE might have done
   private function __convertBreaks($text) {
     $found = true;
     
@@ -195,10 +275,10 @@ class plgContentJoomlaUtils extends JPlugin {
 
 // all possible leading breaks
 plgContentJoomlaUtils::$BREAKS_LEADING = array_merge ( plgContentJoomlaUtils::BR, 
-    plgContentJoomlaUtils::P_OPEN );
+    plgContentJoomlaUtils::P_CLOSE );
 // all possible trailing breaks
 plgContentJoomlaUtils::$BREAKS_TRAILING = array_merge ( plgContentJoomlaUtils::BR, 
-    plgContentJoomlaUtils::P_CLOSE );
+    plgContentJoomlaUtils::P_OPEN );
 // all possible breaks
 plgContentJoomlaUtils::$BREAKS_ALL = array_merge ( plgContentJoomlaUtils::BR, 
     plgContentJoomlaUtils::P_OPEN, plgContentJoomlaUtils::P_CLOSE );
