@@ -298,21 +298,33 @@ class plgContentJoomlaUtils extends JPlugin {
         $startIndex += 6 + strlen ( $id );
       }
       
+      $toc = $toc . '<br />';
       for($useDepth = 1; $useDepth < $depth; $useDepth ++) {
         if ($counters [$useDepth] > 0) {
           $toc = $toc . '&nbsp;&nbsp;';
         }
       }
       
-      $toc = $toc . '<a href="#' . $id . '" class="toc">' . $keyStr . ' ' .
-           trim ( $contents ) . '</a><br />';
+      $toc = $toc . '<a href="#' . $id . '" class="toc">' . $keyStr . trim ( $contents ) .
+           '</a>';
     }
     
     if (($startIndex = strpos ( $text, '{toc}' )) !== false) {
       if (strlen ( $toc ) > 0) {
-        $text = self::__stripTrailingBreaks ( substr ( $text, 0, $startIndex ) ) .
-             '<div class="toc"><span class="tocTitle">Contents</span><br />' . $toc .
-             '</div>' . self::__stripLeadingBreaks ( substr ( $text, $startIndex + 5 ) );
+        $preText = substr ( $text, 0, $startIndex );
+        $postText = '';
+        
+        $i = strlen ( $preText ) - strlen ( P_OPEN [0] );
+        if (substr ( $preText, $i ) === P_OPEN [0]) {
+          $preText = substr ( $preText, 0, $i );
+          $postText = P_OPEN [0];
+        } else {
+          $preText = self::__stripTrailingBreaks ( $preText );
+        }
+        
+        $text = $preText . '<div class="toc"><span class="tocTitle">Contents</span>' . $toc .
+             '</div>' . $postText .
+             self::__stripLeadingBreaks ( substr ( $text, $startIndex + 5 ) );
         return true;
       }
     }

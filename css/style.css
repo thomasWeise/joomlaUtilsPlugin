@@ -21,7 +21,7 @@ span.tocTitle {
 
 div.toc {
 	max-width:40%;
-	display:inline-block;	
+	float:left;
 	margin-right:1em;
   margin-bottom:0.5em;
 	border:1px solid lightgray;
