@@ -18,7 +18,13 @@ A plugin providing some utility functions for Joomla.
 - `[[XXX||wiki]]` renders to `<span class="lng" lang="zh_HANS">[<a href="http://zh.wikipedia.org/wiki/XXX">XXX</a>]</span>`
 
 
-### 1.2. Google Maps
+### Auto-TOC
+
+If you place the tag `{toc}` anywhere into an article, it will be replaced by an automatically generated table of contents. This table will, by default, be a block floating within your text. Ideally you should place this tag at the beginning of your article, in line with a description of the page.
+
+If you include such a `{toc}`, all your `<h*`-tags will be auto-numbered and listed in the table of contents. 
+
+### 1.3. Google Maps
 
 This small utility can render a static Google Map into the web page. It also allows for specifying an alternative image in case Google Maps cannot be reached. Thus, you would first render the map with some bogus `path-to-alternative-image`, render the map, then copy the image and update the alternative path.
 

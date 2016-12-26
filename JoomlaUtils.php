@@ -49,6 +49,10 @@ class plgContentJoomlaUtils extends JPlugin {
           $changed = true;
     }
     
+    if (self::__renderTOC ( $article->text )) {
+      $changed = true;
+    }
+    
     if ($changed) {
       JFactory::getDocument ( )->addStyleSheet ( 
           JURI::base ( ) . "plugins/content/JoomlaUtils/css/style.css" );
@@ -193,6 +197,127 @@ class plgContentJoomlaUtils extends JPlugin {
     }
     
     return $retval;
+  }
+  
+  // render a toc: pick up <h.. tags, number them, give them ids, list them
+  private function __renderTOC(&$text) {
+    if (strpos ( $text, '{toc}' ) === false) {
+      return false;
+    }
+    
+    $toc = '';
+    $counters = array (0,0,0,0,0,0,0 );
+    
+    $startIndex = 0;
+    while ( ($startIndex = strpos ( $text, '<h', $startIndex )) !== false ) {
+      $startIndex += 2;
+      $depth = substr ( $text, $startIndex, 1 );
+      if (strlen ( $depth ) !== 1) {
+        break;
+      }
+      $startIndex ++;
+      $depth = intval ( $depth );
+      if (($depth <= 0) || ($depth > 6)) {
+        continue;
+      }
+      
+      $inner = substr ( $text, $startIndex, 1 );
+      if ($inner === '>') {
+        $innerStart = $innerEnd = $startIndex;
+        $inner = '';
+        $startIndex ++;
+      } else {
+        if ($inner !== ' ') {
+          continue;
+        }
+        $startIndex ++;
+        if ((($innerEnd = strpos ( $text, '>', $startIndex )) === false) ||
+             ($innerEnd < $startIndex)) {
+          continue;
+        }
+        $inner = substr ( $text, $startIndex, $innerEnd - $startIndex );
+        $innerStart = $startIndex;
+        $startIndex = $innerEnd + 1;
+      }
+      
+      if ((($endIndex = strpos ( $text, '</h' . $depth . '>', $startIndex )) === false) ||
+           ($endIndex < $startIndex)) {
+        continue;
+      }
+      $contents = substr ( $text, $startIndex, $endIndex - $startIndex );
+      $contentStart = $startIndex;
+      $startIndex = $endIndex + 5;
+      
+      // find key
+      $keyStr = '';
+      $useDepth = 1;
+      $hasKey = false;
+      for(; $useDepth < $depth; $useDepth ++) {
+        if (($counters [$useDepth] > 0) || $hasKey) {
+          if ($hasKey) {
+            $keyStr = $keyStr . '.';
+          }
+          $hasKey = true;
+          $keyStr = $keyStr . $counters [$useDepth];
+        }
+      }
+      
+      if ($hasKey) {
+        $keyStr = $keyStr . '.';
+      }
+      $counters [$depth] ++;
+      $keyStr = $keyStr . $counters [$depth];
+      $keyStr = $keyStr . '.';
+      
+      for($useDepth = ($depth + 1); $useDepth < count ( $counters ); $useDepth ++) {
+        $counters [$useDepth] = 0;
+      }
+      
+      // determine id
+      $id = $keyStr;
+      $needsId = true;
+      if (($idStart = strpos ( $inner, 'id=' )) !== false) {
+        $idStart += 3;
+        $idSep = substr ( $inner, $idStart, 1 );
+        if (($idSep === '"') || ($idSep == "'")) {
+          $idStart ++;
+          if ((($idEnd = strpos ( $inner, $idSep, $idStart )) !== false) &&
+               ($idEnd > $idStart)) {
+            $id = substr ( $inner, $idStart, ($idEnd - $idStart) );
+            $needsId = false;
+          }
+        }
+      }
+      
+      $keyStr = $keyStr . '&nbsp;';
+      $text = substr_replace ( $text, $keyStr, $contentStart, 0 );
+      $startIndex += strlen ( $keyStr );
+      
+      if ($needsId) {
+        $text = substr_replace ( $text, (' id="' . $id . '"'), $innerStart, 0 );
+        $startIndex += 6 + strlen ( $id );
+      }
+      
+      for($useDepth = 1; $useDepth < $depth; $useDepth ++) {
+        if ($counters [$useDepth] > 0) {
+          $toc = $toc . '&nbsp;&nbsp;';
+        }
+      }
+      
+      $toc = $toc . '<a href="#' . $id . '" class="toc">' . $keyStr . ' ' .
+           trim ( $contents ) . '</a><br />';
+    }
+    
+    if (($startIndex = strpos ( $text, '{toc}' )) !== false) {
+      if (strlen ( $toc ) > 0) {
+        $text = self::__stripTrailingBreaks ( substr ( $text, 0, $startIndex ) ) .
+             '<div class="toc"><span class="tocTitle">Contents</span><br />' . $toc .
+             '</div>' . self::__stripLeadingBreaks ( substr ( $text, $startIndex + 5 ) );
+        return true;
+      }
+    }
+    
+    return false;
   }
   
   // finding next non-empty string in a string list

@@ -14,3 +14,20 @@ ul.map {
 
 li.map {
 }
+
+span.tocTitle {
+	font-weight:bold;
+}
+
+div.toc {
+	max-width:40%;
+	display:inline-block;	
+	margin-right:1em;
+  margin-bottom:0.5em;
+	border:1px solid lightgray;
+	vertical-align:top;
+	padding-top: 3px;
+	padding-bottom: 3px;
+	padding-left:0.4em;
+	padding-right:0.8em;
+}
