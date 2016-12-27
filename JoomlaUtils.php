@@ -16,7 +16,7 @@ class plgContentJoomlaUtils extends JPlugin {
   // an array with characters to be replaced by space
   const TO_SPACE = [ "\f","\t","\x0B","\0",'  ','  ','  ','  ' ];
   // constants for line breaks
-  const BR = [ '<br>','<br/>','<br />',"<br\t>" ];
+  const BR = [ '<br>','<br/>','<br />',"<br\t>",'<p/>','<p />' ];
   // constants for opening paragraph tags
   const P_OPEN = [ '<p>' ];
   // constants for closing paragraph tags
@@ -188,8 +188,7 @@ class plgContentJoomlaUtils extends JPlugin {
              '" style="min-width:100%;width:100%;max-width:100%;min-height:auto;height:auto;max-height:auto" onError="this.onerror=null;this.src=' .
              "'" . $altImage . "'" . ';" /></p></div>';
         
-        $text = self::__stripTrailingBreaks ( substr ( $text, 0, $startIndex ) ) . $mapRes . self::__stripLeadingBreaks ( 
-            substr ( $text, $endIndex + 5 ) );
+        $text = self::__replaceAndFixBreaks ( $text, $startIndex, $endIndex + 5, $mapRes );
         $retval = true;
       } else {
         return $retval;
@@ -311,20 +310,9 @@ class plgContentJoomlaUtils extends JPlugin {
     
     if (($startIndex = strpos ( $text, '{toc}' )) !== false) {
       if (strlen ( $toc ) > 0) {
-        $preText = substr ( $text, 0, $startIndex );
-        $postText = '';
-        
-        $i = strlen ( $preText ) - strlen ( P_OPEN [0] );
-        if (substr ( $preText, $i ) === P_OPEN [0]) {
-          $preText = substr ( $preText, 0, $i );
-          $postText = P_OPEN [0];
-        } else {
-          $preText = self::__stripTrailingBreaks ( $preText );
-        }
-        
-        $text = $preText . '<div class="toc"><span class="tocTitle">Contents</span>' . $toc .
-             '</div>' . $postText .
-             self::__stripLeadingBreaks ( substr ( $text, $startIndex + 5 ) );
+        $text = self::__replaceAndFixBreaks ( $text, $startIndex, $startIndex + 5, 
+            '<div class="tocOuter"><div class="tocInner"><span class="tocTitle">Contents</span>' .
+                 $toc . '</div></div>' );
         return true;
       }
     }
@@ -344,39 +332,61 @@ class plgContentJoomlaUtils extends JPlugin {
     return false;
   }
   
-  // remove breaks directly at the end of text that may come from tinyMCE
-  private function __stripTrailingBreaks($text) {
+  // replace a portion in a text and fix potential leading and trailing breaks
+  private function __replaceAndFixBreaks($text, $startIndex, $endIndex, $replacement) {
+    $preText = substr ( $text, 0, $startIndex );
+    $postText = substr ( $text, $endIndex );
+    
     $found = true;
     while ( $found ) {
-      $found = false;
-      $text = rtrim ( $text );
-      foreach ( self::$BREAKS_TRAILING as $str ) {
-        $i = strlen ( $text ) - strlen ( $str );
-        if (substr ( $text, $i ) === $str) {
-          $text = substr ( $text, 0, $i );
-          $found = true;
+      while ( $found ) {
+        $found = false;
+        $preText = rtrim ( $preText );
+        $postText = ltrim ( $postText );
+        
+        foreach ( self::BR as $str ) {
+          $i = strlen ( $str );
+          if (substr ( $postText, 0, $i ) === $str) {
+            $postText = substr ( $postText, $i );
+            $found = true;
+          }
+          $i = strlen ( $preText ) - $i;
+          if (substr ( $preText, $i ) === $str) {
+            $preText = substr ( $preText, 0, $i );
+            $found = true;
+          }
         }
       }
-    }
-    return $text;
-  }
-  
-  // remove breaks directly at the start of text that may come from tinyMCE
-  private function __stripLeadingBreaks($text) {
-    $found = true;
-    while ( $found ) {
-      $found = false;
-      $text = ltrim ( $text );
-      foreach ( self::$BREAKS_LEADING as $str ) {
-        $i = strlen ( $str );
-        if (substr ( $text, 0, $i ) === $str) {
-          $text = substr ( $text, $i );
+      
+      $pOpen = false;
+      foreach ( self::P_OPEN as $str ) {
+        $i = strlen ( $preText ) - strlen ( $str );
+        if (substr ( $preText, $i ) === $str) {
+          $pOpen = $i;
+          break;
+        }
+      }
+      
+      if ($pOpen !== false) {
+        $pClose = false;
+        
+        foreach ( self::P_CLOSE as $str ) {
+          $i = strlen ( $str );
+          if (substr ( $postText, 0, $i ) === $str) {
+            $pClose = $i;
+            break;
+          }
+        }
+        
+        if ($pClose !== false) {
+          $preText = substr ( $preText, 0, $pOpen );
+          $postText = substr ( $postText, $pClose );
           $found = true;
         }
       }
     }
     
-    return $text;
+    return $preText . $replacement . $postText;
   }
   
   // convert breaks to newlines in order to deal with stuff tinyMCE might have done
@@ -410,12 +420,6 @@ class plgContentJoomlaUtils extends JPlugin {
   }
 }
 
-// all possible leading breaks
-plgContentJoomlaUtils::$BREAKS_LEADING = array_merge ( plgContentJoomlaUtils::BR, 
-    plgContentJoomlaUtils::P_CLOSE );
-// all possible trailing breaks
-plgContentJoomlaUtils::$BREAKS_TRAILING = array_merge ( plgContentJoomlaUtils::BR, 
-    plgContentJoomlaUtils::P_OPEN );
 // all possible breaks
 plgContentJoomlaUtils::$BREAKS_ALL = array_merge ( plgContentJoomlaUtils::BR, 
     plgContentJoomlaUtils::P_OPEN, plgContentJoomlaUtils::P_CLOSE );

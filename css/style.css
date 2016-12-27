@@ -19,15 +19,15 @@ span.tocTitle {
 	font-weight:bold;
 }
 
-div.toc {
-	max-width:40%;
-	float:left;
-	margin-right:1em;
-  margin-bottom:0.5em;
+div.tocInner {
 	border:1px solid lightgray;
-	vertical-align:top;
-	padding-top: 3px;
-	padding-bottom: 3px;
-	padding-left:0.4em;
-	padding-right:0.8em;
+	padding:0.3em;
+  margin:0.8ex 1em 0.8ex 1em;
+  margin:1em;
+  display:inline-block;
+  text-align:left;
+}
+
+div.tocOuter {
+  text-align:center;
 }
