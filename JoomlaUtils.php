@@ -33,6 +33,16 @@ class plgContentJoomlaUtils extends JPlugin {
   const WIKIPEDIA_URLS_FOR_LOCALES = [ 'de' => 'https://de.wikipedia.org/wiki/',
       'en' => 'https://en.wikipedia.org/wiki/','zh' => 'https://zh.wikipedia.org/wiki/' ];
   
+  // constants for math constants to be replaced
+  const MATH_IN = [ '\in','\gt','\lt','\ge','\le','\approx','\neq','\star','\forall',
+      '\exists','\not\in','\infty','\Rightarrow','\mapsto','\prime','&prime;&prime;',
+      '\emptyset','\sqrt','\land','\lor','\dots','\ ',' ','\sum' ];
+  // constants for math constants to replac
+  const MATH_OUT = [ '&isin;','&gt;','&lt;','&ge;','&le;','&asymp;','&ne;','&lowast;',
+      '&forall;','&exist;','&notin;','&infin;','&rArr;','&#x21a6;','&prime;','&Prime;',
+      '&empty;','&radic;','&and;','&or;','&hellip;','&nbsp;','',
+      '<span class="big">&sum;</span>' ];
+  
   // all possible leading breaks
   static $BREAKS_LEADING;
   // all possible trailing breaks
@@ -44,21 +54,129 @@ class plgContentJoomlaUtils extends JPlugin {
   public function onContentPrepare($context, &$article, &$params, $limitstart) {
     $changed = false;
     
-    while ( self::__renderMap ( $article->text ) ||
-         self::__renderSecondLanguage ( $article->text ) ) {
-          $changed = true;
+    if (self::__renderMath ( $article->text )) {
+      $changed = true;
     }
-    
+    if (self::__renderMap ( $article->text )) {
+      $changed = true;
+    }
+    if (self::__renderSecondLanguage ( $article->text )) {
+      $changed = true;
+    }
     if (self::__renderTOC ( $article->text )) {
       $changed = true;
     }
-    
     if ($changed) {
       JFactory::getDocument ( )->addStyleSheet ( 
           JURI::base ( ) . "plugins/content/JoomlaUtils/css/style.css" );
     }
-    
     return true;
+  }
+  
+  // rendering math tags
+  private function __renderMath(&$text) {
+    $offset = 0;
+    $retval = false;
+    while ( (($startIndex = strpos ( $text, '$$', $offset )) !== false) &&
+         ($startIndex >= $offset) ) {
+          $offset = $startIndex + 2;
+      if ((($endIndex = strpos ( $text, '$$', $startIndex + 2 )) !== false) &&
+           ($endIndex > $startIndex)) {
+        $text = substr_replace ( $text, 
+            ('<span class="math">' . self::__renderSingleMath ( 
+                str_replace ( self::MATH_IN, self::MATH_OUT, 
+                    substr ( $text, $startIndex + 2, $endIndex - $startIndex - 2 ) ) ) .
+             '</span>'), $startIndex, $endIndex - $startIndex + 2 );
+        $retval = true;
+      } else {
+        return $retval;
+      }
+    }
+    
+    return $retval;
+  }
+  
+  // rendering math recursively
+  private function __renderSingleMath($text) {
+    $len = strlen ( $text );
+    $result = '';
+    $braceStart = false;
+    $braceDepth = 0;
+    $copyFrom = 0;
+    $next = '';
+    $insert = '';
+    
+    for($i = 0; $i < $len; $i ++) {
+      $curChar = $text [$i];
+      
+      if ($curChar === '{') {
+        if ($braceDepth === 0) {
+          $braceStart = $i;
+        }
+        $braceDepth += 1;
+        continue;
+      }
+      
+      if ($curChar === '}') {
+        $braceDepth -= 1;
+        if ($braceDepth === 0) {
+          $result = $result . substr ( $text, $copyFrom, $braceStart - $copyFrom ) . self::__renderSingleMath ( 
+              substr ( $text, $braceStart + 1, $i - $braceStart - 1 ) );
+          if (strlen ( $next ) > 0) {
+            $result .= $next;
+            $next = '';
+          }
+          $copyFrom = $i + 1;
+        }
+        continue;
+      }
+      
+      if ($braceDepth > 0) {
+        continue;
+      }
+      
+      switch ($curChar) {        
+        case '^' :
+          {
+            $insert .= '<sup>';
+            $next = '</sup>' . $next;
+            break;
+          }
+        case '_' :
+          {
+            $insert .= '<sub>';
+            $next = '</sub>' . $next;
+            break;
+          }        
+        case '~' :
+          {
+            $insert .= '<span class="vec">';
+            $next = '</span>' . $next;
+            break;
+          }        
+        case '@' :
+          {
+            $insert .= '<span class="msp">';
+            $next = '</span>' . $next;
+            break;
+          }        
+        default :
+          {
+            if (strlen ( $next ) > 0) {
+              $result .= substr ( $text, $copyFrom, $i - $copyFrom + 1 ) . $next;
+              $next = '';
+              $copyFrom = $i + 1;
+            }
+            continue 2;
+          }
+      }
+      
+      $result = $result . substr ( $text, $copyFrom, $i - $copyFrom ) . $insert;
+      $insert = '';
+      $copyFrom = $i + 1;
+    }
+    
+    return $result . substr ( $text, $copyFrom ) . $next;
   }
   
   // rendering second language tags and wikipedia links [[..]]

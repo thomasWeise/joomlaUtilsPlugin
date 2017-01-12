@@ -31,3 +31,24 @@ div.tocInner {
 div.tocOuter {
   text-align:center;
 }
+
+
+span.math {
+  font-family:freeserif, "times new roman", serif;
+  font-style:normal;
+  font-weight:normal;
+  white-space:nowrap;  
+}
+
+span.msp {
+  font-family:algerian, castellar, "colonna mt", euclid, "imprint mt shadow", msbm, "times new roman", serif;
+}
+
+span.vec {
+  font-family:freeserif, "times new roman", serif;
+  font-weight:bold;
+}
+
+span.big {
+	font-size: 115%;
+}

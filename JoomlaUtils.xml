@@ -4,11 +4,11 @@
 	<creationDate>2016-12-22</creationDate>
 	<author>Thomas Weise</author>
 	<authorEmail>tweise@hfuu.edu.cn</authorEmail>
-	<authorUrl>http://www.it-weise.de</authorUrl>
+	<authorUrl>http://iao.hfuu.edu.cn</authorUrl>
 	<copyright>2016</copyright>
 	<license>GNU/GPL 3</license>
 	<version>0.8.0</version>
-	<description>Some utilities used in our IOAO website.</description>
+	<description>Some utilities used in our IAO website.</description>
 	<files>
 		<filename plugin="JoomlaUtils">JoomlaUtils.php</filename>
 		<folder>css</folder>
