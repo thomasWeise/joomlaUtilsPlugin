@@ -36,11 +36,11 @@ class plgContentJoomlaUtils extends JPlugin {
   // constants for math constants to be replaced
   const MATH_IN = [ '\in','\gt','\lt','\ge','\le','\approx','\neq','\star','\forall',
       '\exists','\not\in','\infty','\Rightarrow','\mapsto','\prime','&prime;&prime;',
-      '\emptyset','\sqrt','\land','\lor','\dots','\ ',' ','\sum' ];
+      '\emptyset','\sqrt','\land','\lor','\times','\dots','\ ',' ','\sum' ];
   // constants for math constants to replac
   const MATH_OUT = [ '&isin;','&gt;','&lt;','&ge;','&le;','&asymp;','&ne;','&lowast;',
       '&forall;','&exist;','&notin;','&infin;','&rArr;','&#x21a6;','&prime;','&Prime;',
-      '&empty;','&radic;','&and;','&or;','&hellip;','&nbsp;','',
+      '&empty;','&radic;','&and;','&or;','&times;','&hellip;','&nbsp;','',
       '<span class="big">&sum;</span>' ];
   
   // all possible leading breaks
@@ -135,7 +135,7 @@ class plgContentJoomlaUtils extends JPlugin {
         continue;
       }
       
-      switch ($curChar) {        
+      switch ($curChar) {
         case '^' :
           {
             $insert .= '<sup>';
@@ -147,19 +147,19 @@ class plgContentJoomlaUtils extends JPlugin {
             $insert .= '<sub>';
             $next = '</sub>' . $next;
             break;
-          }        
+          }
         case '~' :
           {
             $insert .= '<span class="vec">';
             $next = '</span>' . $next;
             break;
-          }        
+          }
         case '@' :
           {
             $insert .= '<span class="msp">';
             $next = '</span>' . $next;
             break;
-          }        
+          }
         default :
           {
             if (strlen ( $next ) > 0) {
