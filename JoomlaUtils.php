@@ -34,12 +34,12 @@ class plgContentJoomlaUtils extends JPlugin {
       'en' => 'https://en.wikipedia.org/wiki/','zh' => 'https://zh.wikipedia.org/wiki/' ];
   
   // constants for math constants to be replaced
-  const MATH_IN = [ '\in','\gt','\lt','\ge','\le','\approx','\neq','\star','\forall',
-      '\exists','\not\in','\infty','\Rightarrow','\mapsto','\prime','&prime;&prime;',
+  const MATH_IN = [ '\infty','\in','\gt','\lt','\ge','\le','\approx','\neq','\star',
+      '\forall','\exists','\not\in','\Rightarrow','\mapsto','\prime','&prime;&prime;',
       '\emptyset','\sqrt','\land','\lor','\times','\dots','\ ',' ','\sum' ];
   // constants for math constants to replac
-  const MATH_OUT = [ '&isin;','&gt;','&lt;','&ge;','&le;','&asymp;','&ne;','&lowast;',
-      '&forall;','&exist;','&notin;','&infin;','&rArr;','&#x21a6;','&prime;','&Prime;',
+  const MATH_OUT = [ '&infin;','&isin;','&gt;','&lt;','&ge;','&le;','&asymp;','&ne;',
+      '&lowast;','&forall;','&exist;','&notin;','&rArr;','&#x21a6;','&prime;','&Prime;',
       '&empty;','&radic;','&and;','&or;','&times;','&hellip;','&nbsp;','',
       '<span class="big">&sum;</span>' ];
   
