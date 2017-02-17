@@ -31,7 +31,8 @@ class plgContentJoomlaUtils extends JPlugin {
   const LOCALE_FOREIGN_DEFAULT = self::LOCALE_CHINESE;
   // the wikipedia base urls for different locales
   const WIKIPEDIA_URLS_FOR_LOCALES = [ 'de' => 'https://de.wikipedia.org/wiki/',
-      'en' => 'https://en.wikipedia.org/wiki/','zh' => 'https://zh.wikipedia.org/wiki/' ];
+      'en' => 'https://en.wikipedia.org/wiki/','zh' => 'https://zh.wikipedia.org/wiki/',
+      'ru' => 'https://ru.wikipedia.org/wiki/' ];
   
   // constants for math constants to be replaced
   const MATH_IN = [ '\infty','\in','\gt','\lt','\ge','\le','\approx','\neq','\star',
